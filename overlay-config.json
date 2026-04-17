@@ -1,0 +1,39 @@
+{
+  "expectedAspectRatio": {
+    "width": 4,
+    "height": 3
+  },
+  "aspectRatioTolerance": 0.05,
+  "overlays": {
+    "logo": {
+      "enabled": true,
+      "x": 50,
+      "y": 50,
+      "width": 200,
+      "height": 200,
+      "imagePath": "/overlays/logo.png"
+    },
+    "storeName": {
+      "enabled": true,
+      "x": 300,
+      "y": 50,
+      "width": 400,
+      "height": 80,
+      "imagePath": "/overlays/store-name.png"
+    },
+    "date": {
+      "enabled": true,
+      "x": 50,
+      "y": 900,
+      "width": 300,
+      "height": 60,
+      "fontFamily": "Arial",
+      "fontSize": 48,
+      "fontColor": "#FFFFFF",
+      "fontWeight": "bold",
+      "strokeColor": "#000000",
+      "strokeWidth": 2,
+      "format": "YYYY/MM/DD"
+    }
+  }
+}

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オーバーレイ設定エディタ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; display: flex; height: 100vh; }
+
+  .sidebar {
+    width: 360px; background: #16213e; padding: 20px; overflow-y: auto; flex-shrink: 0;
+    border-right: 1px solid #333;
+  }
+  .sidebar h1 { font-size: 18px; margin-bottom: 16px; color: #64b5f6; }
+  .sidebar h2 { font-size: 14px; margin: 16px 0 8px; color: #90caf9; border-bottom: 1px solid #333; padding-bottom: 4px; }
+
+  .field { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .field label { width: 80px; font-size: 13px; flex-shrink: 0; }
+  .field input, .field select { background: #0f3460; border: 1px solid #444; color: #eee; padding: 4px 8px; border-radius: 4px; width: 100%; font-size: 13px; }
+  .field input[type="number"] { width: 70px; }
+  .field input[type="color"] { width: 40px; height: 28px; padding: 0; cursor: pointer; }
+  .field input[type="checkbox"] { width: auto; }
+
+  .canvas-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow: auto; }
+  .canvas-container { position: relative; border: 2px solid #333; cursor: crosshair; display: inline-block; }
+  .canvas-container canvas { display: block; }
+
+  .overlay-handle {
+    position: absolute; border: 2px dashed rgba(100, 181, 246, 0.8);
+    cursor: move; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: rgba(255,255,255,0.7); user-select: none;
+  }
+  .overlay-handle:hover { border-color: #fff; }
+  .overlay-handle .resize {
+    position: absolute; right: -4px; bottom: -4px; width: 10px; height: 10px;
+    background: #64b5f6; cursor: nwse-resize;
+  }
+
+  .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; margin: 4px; }
+  .btn-primary { background: #1976d2; color: #fff; }
+  .btn-primary:hover { background: #1565c0; }
+  .btn-success { background: #388e3c; color: #fff; }
+  .btn-success:hover { background: #2e7d32; }
+  .btn-file { background: #7b1fa2; color: #fff; }
+  .btn-file:hover { background: #6a1b9a; }
+
+  .actions { margin-top: 16px; display: flex; flex-wrap: wrap; }
+  .info { font-size: 12px; color: #999; margin-top: 12px; }
+  .json-output { background: #0a0a1a; border: 1px solid #333; padding: 12px; border-radius: 6px; font-size: 12px; font-family: monospace; white-space: pre-wrap; max-height: 200px; overflow-y: auto; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h1>🎨 オーバーレイ設定</h1>
+
+  <div class="field">
+    <label>サンプル画像</label>
+    <input type="file" id="sampleImage" accept="image/*">
+  </div>
+
+  <h2>📐 基準アスペクト比</h2>
+  <div class="field">
+    <label>幅</label>
+    <input type="number" id="arW" value="4" min="1">
+    <label>高さ</label>
+    <input type="number" id="arH" value="3" min="1">
+  </div>
+  <div class="field">
+    <label>許容誤差</label>
+    <input type="number" id="arTol" value="0.05" min="0" max="1" step="0.01">
+  </div>
+
+  <h2>🏷 ロゴ</h2>
+  <div class="field">
+    <input type="checkbox" id="logoEnabled" checked>
+    <label>有効</label>
+  </div>
+  <div class="field">
+    <label>画像</label>
+    <input type="file" id="logoFile" accept="image/*">
+  </div>
+  <div class="field">
+    <label>X</label><input type="number" id="logoX" value="50">
+    <label>Y</label><input type="number" id="logoY" value="50">
+  </div>
+  <div class="field">
+    <label>幅</label><input type="number" id="logoW" value="200">
+    <label>高さ</label><input type="number" id="logoH" value="200">
+  </div>
+
+  <h2>🏪 店名</h2>
+  <div class="field">
+    <input type="checkbox" id="storeEnabled" checked>
+    <label>有効</label>
+  </div>
+  <div class="field">
+    <label>画像</label>
+    <input type="file" id="storeFile" accept="image/*">
+  </div>
+  <div class="field">
+    <label>X</label><input type="number" id="storeX" value="300">
+    <label>Y</label><input type="number" id="storeY" value="50">
+  </div>
+  <div class="field">
+    <label>幅</label><input type="number" id="storeW" value="400">
+    <label>高さ</label><input type="number" id="storeH" value="80">
+  </div>
+
+  <h2>📅 日付</h2>
+  <div class="field">
+    <input type="checkbox" id="dateEnabled" checked>
+    <label>有効</label>
+  </div>
+  <div class="field">
+    <label>X</label><input type="number" id="dateX" value="50">
+    <label>Y</label><input type="number" id="dateY" value="900">
+  </div>
+  <div class="field">
+    <label>フォント</label>
+    <input type="text" id="dateFont" value="Arial">
+  </div>
+  <div class="field">
+    <label>サイズ</label><input type="number" id="dateFontSize" value="48">
+    <label>太さ</label>
+    <select id="dateFontWeight">
+      <option value="normal">normal</option>
+      <option value="bold" selected>bold</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>文字色</label><input type="color" id="dateFontColor" value="#FFFFFF">
+    <label>縁色</label><input type="color" id="dateStrokeColor" value="#000000">
+  </div>
+  <div class="field">
+    <label>縁幅</label><input type="number" id="dateStrokeWidth" value="2" min="0">
+    <label>形式</label><input type="text" id="dateFormat" value="YYYY/MM/DD">
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="renderPreview()">🔄 プレビュー更新</button>
+    <button class="btn btn-success" onclick="exportConfig()">💾 設定を出力</button>
+    <button class="btn btn-file" onclick="importConfig()">📂 設定を読込</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+
+  <div class="info">
+    ※ 座標・サイズは基準解像度 1200×900 (4:3) に対する値です。<br>
+    　 実際の画像サイズに応じて自動スケーリングされます。<br>
+    ※ ドラッグで位置移動、右下ハンドルでリサイズできます。
+  </div>
+
+  <div id="jsonOutput" class="json-output" style="display:none;"></div>
+</div>
+
+<div class="canvas-area">
+  <div class="canvas-container" id="canvasContainer">
+    <canvas id="previewCanvas" width="1200" height="900"></canvas>
+  </div>
+</div>
+
+<script>
+const REF_W = 1200, REF_H = 900;
+let sampleImg = null;
+let logoImg = null;
+let storeImg = null;
+let displayScale = 1;
+
+// Overlay handles for drag
+const handles = {};
+
+function el(id) { return document.getElementById(id); }
+function numVal(id) { return parseFloat(el(id).value) || 0; }
+
+// Load sample image
+el('sampleImage').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => { sampleImg = img; renderPreview(); };
+  img.src = URL.createObjectURL(file);
+});
+
+el('logoFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => { logoImg = img; renderPreview(); };
+  img.src = URL.createObjectURL(file);
+});
+
+el('storeFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => { storeImg = img; renderPreview(); };
+  img.src = URL.createObjectURL(file);
+});
+
+function formatDate(fmt) {
+  const d = new Date();
+  return fmt
+    .replace('YYYY', d.getFullYear())
+    .replace('MM', String(d.getMonth()+1).padStart(2,'0'))
+    .replace('DD', String(d.getDate()).padStart(2,'0'));
+}
+
+function renderPreview() {
+  const canvas = el('previewCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Fit canvas to area
+  const area = document.querySelector('.canvas-area');
+  const maxW = area.clientWidth - 40;
+  const maxH = area.clientHeight - 40;
+  displayScale = Math.min(maxW / REF_W, maxH / REF_H, 1);
+
+  canvas.width = REF_W;
+  canvas.height = REF_H;
+  canvas.style.width = (REF_W * displayScale) + 'px';
+  canvas.style.height = (REF_H * displayScale) + 'px';
+
+  // Draw background
+  if (sampleImg) {
+    ctx.drawImage(sampleImg, 0, 0, REF_W, REF_H);
+  } else {
+    ctx.fillStyle = '#2a2a4a';
+    ctx.fillRect(0, 0, REF_W, REF_H);
+    ctx.fillStyle = '#555';
+    ctx.font = '24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('サンプル画像を読み込んでください', REF_W/2, REF_H/2);
+    ctx.textAlign = 'start';
+  }
+
+  // Draw logo
+  if (el('logoEnabled').checked) {
+    const x = numVal('logoX'), y = numVal('logoY'), w = numVal('logoW'), h = numVal('logoH');
+    if (logoImg) {
+      ctx.drawImage(logoImg, x, y, w, h);
+    } else {
+      ctx.strokeStyle = 'rgba(255,100,100,0.6)';
+      ctx.setLineDash([5,5]);
+      ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(255,100,100,0.3)';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#ff6666';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('LOGO', x + 4, y + 18);
+    }
+    updateHandle('logo', x, y, w, h);
+  } else {
+    removeHandle('logo');
+  }
+
+  // Draw store name
+  if (el('storeEnabled').checked) {
+    const x = numVal('storeX'), y = numVal('storeY'), w = numVal('storeW'), h = numVal('storeH');
+    if (storeImg) {
+      ctx.drawImage(storeImg, x, y, w, h);
+    } else {
+      ctx.strokeStyle = 'rgba(100,255,100,0.6)';
+      ctx.setLineDash([5,5]);
+      ctx.strokeRect(x, y, w, h);
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(100,255,100,0.3)';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#66ff66';
+      ctx.font = '14px sans-serif';
+      ctx.fillText('STORE NAME', x + 4, y + 18);
+    }
+    updateHandle('store', x, y, w, h);
+  } else {
+    removeHandle('store');
+  }
+
+  // Draw date
+  if (el('dateEnabled').checked) {
+    const x = numVal('dateX'), y = numVal('dateY');
+    const fontSize = numVal('dateFontSize');
+    const font = el('dateFont').value;
+    const weight = el('dateFontWeight').value;
+    const dateText = formatDate(el('dateFormat').value);
+
+    ctx.font = `${weight} ${fontSize}px ${font}`;
+    ctx.textBaseline = 'top';
+
+    const sw = numVal('dateStrokeWidth');
+    if (sw > 0) {
+      ctx.strokeStyle = el('dateStrokeColor').value;
+      ctx.lineWidth = sw;
+      ctx.strokeText(dateText, x, y);
+    }
+    ctx.fillStyle = el('dateFontColor').value;
+    ctx.fillText(dateText, x, y);
+
+    const metrics = ctx.measureText(dateText);
+    const tw = metrics.width;
+    const th = fontSize * 1.2;
+    updateHandle('date', x, y, tw, th);
+  } else {
+    removeHandle('date');
+  }
+}
+
+// Drag & resize handles
+function updateHandle(name, x, y, w, h) {
+  const container = el('canvasContainer');
+  let handle = handles[name];
+  if (!handle) {
+    handle = document.createElement('div');
+    handle.className = 'overlay-handle';
+    handle.innerHTML = `<span>${name}</span><div class="resize"></div>`;
+    container.appendChild(handle);
+    handles[name] = handle;
+    setupDrag(handle, name);
+  }
+  handle.style.left = (x * displayScale) + 'px';
+  handle.style.top = (y * displayScale) + 'px';
+  handle.style.width = (w * displayScale) + 'px';
+  handle.style.height = (h * displayScale) + 'px';
+}
+
+function removeHandle(name) {
+  if (handles[name]) {
+    handles[name].remove();
+    delete handles[name];
+  }
+}
+
+function setupDrag(handle, name) {
+  let startX, startY, startLeft, startTop, startW, startH, isResize = false;
+  const xId = name === 'store' ? 'storeX' : name === 'logo' ? 'logoX' : 'dateX';
+  const yId = name === 'store' ? 'storeY' : name === 'logo' ? 'logoY' : 'dateY';
+  const wId = name === 'store' ? 'storeW' : name === 'logo' ? 'logoW' : null;
+  const hId = name === 'store' ? 'storeH' : name === 'logo' ? 'logoH' : null;
+
+  const resizeHandle = handle.querySelector('.resize');
+
+  const onMouseDown = (e) => {
+    e.preventDefault();
+    isResize = e.target === resizeHandle;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = parseFloat(handle.style.left);
+    startTop = parseFloat(handle.style.top);
+    startW = parseFloat(handle.style.width);
+    startH = parseFloat(handle.style.height);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const onMouseMove = (e) => {
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (isResize && wId && hId) {
+      const newW = Math.max(20, startW + dx);
+      const newH = Math.max(20, startH + dy);
+      handle.style.width = newW + 'px';
+      handle.style.height = newH + 'px';
+      el(wId).value = Math.round(newW / displayScale);
+      el(hId).value = Math.round(newH / displayScale);
+    } else {
+      const newLeft = startLeft + dx;
+      const newTop = startTop + dy;
+      handle.style.left = newLeft + 'px';
+      handle.style.top = newTop + 'px';
+      el(xId).value = Math.round(newLeft / displayScale);
+      el(yId).value = Math.round(newTop / displayScale);
+    }
+    renderPreview();
+  };
+
+  const onMouseUp = () => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  handle.addEventListener('mousedown', onMouseDown);
+}
+
+function exportConfig() {
+  const config = {
+    expectedAspectRatio: {
+      width: numVal('arW'),
+      height: numVal('arH')
+    },
+    aspectRatioTolerance: numVal('arTol'),
+    overlays: {
+      logo: {
+        enabled: el('logoEnabled').checked,
+        x: numVal('logoX'),
+        y: numVal('logoY'),
+        width: numVal('logoW'),
+        height: numVal('logoH'),
+        imagePath: "/overlays/logo.png"
+      },
+      storeName: {
+        enabled: el('storeEnabled').checked,
+        x: numVal('storeX'),
+        y: numVal('storeY'),
+        width: numVal('storeW'),
+        height: numVal('storeH'),
+        imagePath: "/overlays/store-name.png"
+      },
+      date: {
+        enabled: el('dateEnabled').checked,
+        x: numVal('dateX'),
+        y: numVal('dateY'),
+        width: 300,
+        height: 60,
+        fontFamily: el('dateFont').value,
+        fontSize: numVal('dateFontSize'),
+        fontColor: el('dateFontColor').value.toUpperCase(),
+        fontWeight: el('dateFontWeight').value,
+        strokeColor: el('dateStrokeColor').value.toUpperCase(),
+        strokeWidth: numVal('dateStrokeWidth'),
+        format: el('dateFormat').value
+      }
+    }
+  };
+
+  const json = JSON.stringify(config, null, 2);
+  el('jsonOutput').style.display = 'block';
+  el('jsonOutput').textContent = json;
+
+  // Download
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'overlay-config.json';
+  a.click();
+}
+
+function importConfig() {
+  el('importFile').click();
+}
+
+el('importFile').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const config = JSON.parse(reader.result);
+      // Apply values
+      if (config.expectedAspectRatio) {
+        el('arW').value = config.expectedAspectRatio.width;
+        el('arH').value = config.expectedAspectRatio.height;
+      }
+      if (config.aspectRatioTolerance !== undefined) el('arTol').value = config.aspectRatioTolerance;
+
+      const o = config.overlays || {};
+      if (o.logo) {
+        el('logoEnabled').checked = o.logo.enabled !== false;
+        el('logoX').value = o.logo.x; el('logoY').value = o.logo.y;
+        el('logoW').value = o.logo.width; el('logoH').value = o.logo.height;
+      }
+      if (o.storeName) {
+        el('storeEnabled').checked = o.storeName.enabled !== false;
+        el('storeX').value = o.storeName.x; el('storeY').value = o.storeName.y;
+        el('storeW').value = o.storeName.width; el('storeH').value = o.storeName.height;
+      }
+      if (o.date) {
+        el('dateEnabled').checked = o.date.enabled !== false;
+        el('dateX').value = o.date.x; el('dateY').value = o.date.y;
+        el('dateFont').value = o.date.fontFamily || 'Arial';
+        el('dateFontSize').value = o.date.fontSize || 48;
+        el('dateFontWeight').value = o.date.fontWeight || 'bold';
+        el('dateFontColor').value = o.date.fontColor || '#FFFFFF';
+        el('dateStrokeColor').value = o.date.strokeColor || '#000000';
+        el('dateStrokeWidth').value = o.date.strokeWidth ?? 2;
+        el('dateFormat').value = o.date.format || 'YYYY/MM/DD';
+      }
+      renderPreview();
+      alert('設定を読み込みました');
+    } catch (err) {
+      alert('JSONの読み込みに失敗しました: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Auto-render on input change
+document.querySelectorAll('input[type="number"], input[type="text"], input[type="color"], select, input[type="checkbox"]').forEach(inp => {
+  inp.addEventListener('input', renderPreview);
+  inp.addEventListener('change', renderPreview);
+});
+
+// Initial render
+renderPreview();
+</script>
+</body>
+</html>
