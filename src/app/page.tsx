@@ -210,22 +210,27 @@ export default function Home() {
 
       {status === "idle" && (
         <div
-          className="w-full max-w-md border-2 border-dashed border-gray-500 rounded-xl p-12 text-center hover:border-blue-400 transition-colors"
+          className="w-full max-w-md text-center"
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
-          <label htmlFor="photoInput" className="block cursor-pointer">
-            <p className="text-lg mb-2">📷 タップして写真を選択</p>
-            <p className="text-sm text-gray-400">またはドラッグ＆ドロップ</p>
-          </label>
-          <input
-            id="photoInput"
-            ref={fileInputRef}
-            type="file"
-            accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
-            className="sr-only"
-            onChange={handleFileChange}
-          />
+          <div className="border-2 border-dashed border-gray-500 rounded-xl p-8 mb-4 hover:border-blue-400 transition-colors">
+            <p className="text-lg mb-4">📷 写真を選択してください</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="block w-full text-sm text-gray-300
+                file:mr-4 file:py-3 file:px-6
+                file:rounded-lg file:border-0
+                file:text-base file:font-semibold
+                file:bg-blue-600 file:text-white
+                file:cursor-pointer
+                hover:file:bg-blue-700"
+            />
+          </div>
+          <p className="text-sm text-gray-400">またはドラッグ＆ドロップ</p>
         </div>
       )}
 
