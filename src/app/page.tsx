@@ -147,28 +147,54 @@ export default function Home() {
 
       // Send to Discord
       setStatus("sending");
-      // Export as high-quality JPEG (95%) to keep file size under Discord/Vercel limits
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (b) => (b ? resolve(b) : reject(new Error("Failed to create blob"))),
-          "image/jpeg",
-          0.95
-        );
-      });
-
-      const formData = new FormData();
-      const dateStr = formatDate("YYYY-MM-DD");
-      formData.append("file", blob, `processed_${dateStr}.jpg`);
 
       // Build Discord message with image info
-      const ratio = `${baseImage.width}:${baseImage.height}`;
       const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
       const g = gcd(baseImage.width, baseImage.height);
       const simpleRatio = `${baseImage.width / g}:${baseImage.height / g}`;
+      const dateStr = formatDate("YYYY-MM-DD");
       let discordMessage = `📸 ${dateStr} の画像\n📐 ${baseImage.width}x${baseImage.height}px (${simpleRatio})`;
       if (!aspectCheck.match) {
         discordMessage += `\n⚠ アスペクト比注意: 期待値 ${aspectCheck.expected}`;
       }
+
+      // Try decreasing quality until under 4MB (Vercel limit)
+      const MAX_SIZE = 4 * 1024 * 1024;
+      let quality = 0.92;
+      let blob: Blob | null = null;
+      while (quality >= 0.3) {
+        blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error("Failed to create blob"))),
+            "image/jpeg",
+            quality
+          );
+        });
+        if (blob.size <= MAX_SIZE) break;
+        quality -= 0.1;
+      }
+      if (!blob || blob.size > MAX_SIZE) {
+        // Last resort: resize canvas to half
+        const halfCanvas = document.createElement("canvas");
+        halfCanvas.width = canvas.width / 2;
+        halfCanvas.height = canvas.height / 2;
+        const halfCtx = halfCanvas.getContext("2d");
+        if (halfCtx) {
+          halfCtx.drawImage(canvas, 0, 0, halfCanvas.width, halfCanvas.height);
+          blob = await new Promise<Blob>((resolve, reject) => {
+            halfCanvas.toBlob(
+              (b) => (b ? resolve(b) : reject(new Error("Failed to create blob"))),
+              "image/jpeg",
+              0.85
+            );
+          });
+          discordMessage += `\n📏 サイズ制限のためリサイズ: ${halfCanvas.width}x${halfCanvas.height}px`;
+        }
+      }
+      if (!blob) throw new Error("画像の生成に失敗しました");
+
+      const formData = new FormData();
+      formData.append("file", blob, `processed_${dateStr}.jpg`);
       formData.append("content", discordMessage);
 
       const res = await fetch("/api/discord", {
