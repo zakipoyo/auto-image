@@ -1,30 +1,30 @@
 {
   "expectedAspectRatio": {
-    "width": 4,
-    "height": 3
+    "width": 3,
+    "height": 4
   },
   "aspectRatioTolerance": 0.05,
   "overlays": {
     "logo": {
       "enabled": true,
-      "x": 50,
-      "y": 50,
-      "width": 200,
-      "height": 200,
+      "x": -54,
+      "y": -4,
+      "width": 313,
+      "height": 226,
       "imagePath": "/overlays/logo.png"
     },
     "storeName": {
       "enabled": true,
-      "x": 300,
-      "y": 50,
-      "width": 400,
-      "height": 80,
+      "x": 139,
+      "y": 1021,
+      "width": 600,
+      "height": 180,
       "imagePath": "/overlays/store-name.png"
     },
     "date": {
       "enabled": true,
-      "x": 50,
-      "y": 900,
+      "x": 645,
+      "y": 18,
       "width": 300,
       "height": 60,
       "fontFamily": "Arial",
