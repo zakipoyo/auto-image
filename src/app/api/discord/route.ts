@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+// Allow up to 25MB uploads
+export const maxDuration = 30;
+
 export async function POST(request: NextRequest) {
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
   if (!webhookUrl) {

@@ -42,9 +42,9 @@ export default function Home() {
 
     // Scale factor: overlay config is designed for a "reference" canvas.
     // We scale overlay positions proportionally to actual image size.
-    // Reference size: assume config was designed for 1200x900 (4:3)
-    const refWidth = 1200;
-    const refHeight = 900;
+    // Reference size: assume config was designed for 900x1200 (3:4 portrait)
+    const refWidth = 900;
+    const refHeight = 1200;
 
     return {
       match,
@@ -147,17 +147,18 @@ export default function Home() {
 
       // Send to Discord
       setStatus("sending");
-      // Export as high-quality PNG to maintain resolution
+      // Export as high-quality JPEG (95%) to keep file size under Discord/Vercel limits
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error("Failed to create blob"))),
-          "image/png"
+          "image/jpeg",
+          0.95
         );
       });
 
       const formData = new FormData();
       const dateStr = formatDate("YYYY-MM-DD");
-      formData.append("file", blob, `processed_${dateStr}.png`);
+      formData.append("file", blob, `processed_${dateStr}.jpg`);
 
       // Add aspect ratio warning to Discord message if applicable
       let discordMessage = `📸 ${dateStr} の画像`;
