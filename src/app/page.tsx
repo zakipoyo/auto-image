@@ -107,17 +107,54 @@ export default function Home() {
 
       // Draw store name overlay
       if (overlays.storeName.enabled) {
-        try {
-          const storeImg = await loadImage(overlays.storeName.imagePath);
-          ctx.drawImage(
-            storeImg,
-            overlays.storeName.x * sx,
-            overlays.storeName.y * sy,
-            overlays.storeName.width * sx,
-            overlays.storeName.height * sy
-          );
-        } catch (_e) {
-          console.warn("Store name image not found, skipping");
+        const store = overlays.storeName as Record<string, unknown>;
+        if (store.type === "text" && typeof store.text === "string") {
+          // Text-based store name
+          const storeFont = (store.fontFamily as string) || "Playfair Display";
+          const storeWeight = (store.fontWeight as string) || "bold";
+          const storeFontSize = (store.fontSize as number) || 32;
+          try {
+            await document.fonts.load(`${storeWeight} ${storeFontSize}px "${storeFont}"`);
+          } catch (_e) {
+            console.warn("Store font load failed, using fallback");
+          }
+          const fontSize = storeFontSize * Math.min(sx, sy);
+          ctx.font = `${storeWeight} ${fontSize}px "${storeFont}", serif`;
+          ctx.textBaseline = "top";
+          const align = (store.textAlign as string) || "left";
+          let textX = (store.x as number) * sx;
+          if (align === "center") {
+            ctx.textAlign = "center";
+            textX = canvas.width / 2;
+          } else {
+            ctx.textAlign = "left";
+          }
+          const textY = (store.y as number) * sy;
+          // Draw stroke
+          const strokeW = (store.strokeWidth as number) || 0;
+          if (strokeW > 0) {
+            ctx.strokeStyle = (store.strokeColor as string) || "#000000";
+            ctx.lineWidth = strokeW * Math.min(sx, sy);
+            ctx.strokeText(store.text, textX, textY);
+          }
+          ctx.fillStyle = (store.fontColor as string) || "#FFFFFF";
+          ctx.fillText(store.text, textX, textY);
+          ctx.textAlign = "left";
+        } else {
+          // Image-based store name (legacy)
+          try {
+            const imgPath = (store.imagePath as string) || "/overlays/store-name.png";
+            const storeImg = await loadImage(imgPath);
+            ctx.drawImage(
+              storeImg,
+              (store.x as number) * sx,
+              (store.y as number) * sy,
+              (store.width as number) * sx,
+              (store.height as number) * sy
+            );
+          } catch (_e) {
+            console.warn("Store name image not found, skipping");
+          }
         }
       }
 
