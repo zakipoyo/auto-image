@@ -123,9 +123,16 @@ export default function Home() {
 
       // Draw date text
       if (overlays.date.enabled) {
+        // Ensure font is loaded before drawing
+        const fontFamily = overlays.date.fontFamily;
+        try {
+          await document.fonts.load(`${overlays.date.fontWeight} ${overlays.date.fontSize}px "${fontFamily}"`);
+        } catch (_e) {
+          console.warn("Font load failed, using fallback");
+        }
         const dateText = formatDate(overlays.date.format);
         const fontSize = overlays.date.fontSize * Math.min(sx, sy);
-        ctx.font = `${overlays.date.fontWeight} ${fontSize}px ${overlays.date.fontFamily}`;
+        ctx.font = `${overlays.date.fontWeight} ${fontSize}px "${fontFamily}", serif`;
         ctx.textBaseline = "top";
 
         // Draw stroke
