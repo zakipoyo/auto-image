@@ -160,10 +160,14 @@ export default function Home() {
       const dateStr = formatDate("YYYY-MM-DD");
       formData.append("file", blob, `processed_${dateStr}.jpg`);
 
-      // Add aspect ratio warning to Discord message if applicable
-      let discordMessage = `📸 ${dateStr} の画像`;
+      // Build Discord message with image info
+      const ratio = `${baseImage.width}:${baseImage.height}`;
+      const gcd = (a: number, b: number): number => b === 0 ? a : gcd(b, a % b);
+      const g = gcd(baseImage.width, baseImage.height);
+      const simpleRatio = `${baseImage.width / g}:${baseImage.height / g}`;
+      let discordMessage = `📸 ${dateStr} の画像\n📐 ${baseImage.width}x${baseImage.height}px (${simpleRatio})`;
       if (!aspectCheck.match) {
-        discordMessage += `\n⚠ アスペクト比注意: 元画像 ${aspectCheck.actual} (期待値: ${aspectCheck.expected})`;
+        discordMessage += `\n⚠ アスペクト比注意: 期待値 ${aspectCheck.expected}`;
       }
       formData.append("content", discordMessage);
 
