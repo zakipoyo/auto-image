@@ -210,18 +210,20 @@ export default function Home() {
 
       {status === "idle" && (
         <div
-          className="w-full max-w-md border-2 border-dashed border-gray-500 rounded-xl p-12 text-center cursor-pointer hover:border-blue-400 transition-colors"
-          onClick={() => fileInputRef.current?.click()}
+          className="w-full max-w-md border-2 border-dashed border-gray-500 rounded-xl p-12 text-center hover:border-blue-400 transition-colors"
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
-          <p className="text-lg mb-2">📷 タップして写真を選択</p>
-          <p className="text-sm text-gray-400">またはドラッグ＆ドロップ</p>
+          <label htmlFor="photoInput" className="block cursor-pointer">
+            <p className="text-lg mb-2">📷 タップして写真を選択</p>
+            <p className="text-sm text-gray-400">またはドラッグ＆ドロップ</p>
+          </label>
           <input
+            id="photoInput"
             ref={fileInputRef}
             type="file"
-            accept="image/*"
-            className="hidden"
+            accept=".jpg,.jpeg,.png,.heic,.heif,.webp"
+            className="sr-only"
             onChange={handleFileChange}
           />
         </div>
