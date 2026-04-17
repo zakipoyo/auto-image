@@ -100,7 +100,7 @@ export default function Home() {
             overlays.logo.width * sx,
             overlays.logo.height * sy
           );
-        } catch {
+        } catch (_e) {
           console.warn("Logo image not found, skipping");
         }
       }
@@ -116,7 +116,7 @@ export default function Home() {
             overlays.storeName.width * sx,
             overlays.storeName.height * sy
           );
-        } catch {
+        } catch (_e) {
           console.warn("Store name image not found, skipping");
         }
       }
